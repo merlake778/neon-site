@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Anonymous Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0f0a, #030603);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            padding: 20px;
+        }
+
+        /* Контейнер терминала с неоновой рамкой */
+        .terminal-container {
+            width: 100%;
+            max-width: 1100px;
+            height: 85vh;
+            background: #0c0f0c;
+            border-radius: 18px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), 0 0 5px #0f0 inset;
+            border: 1px solid #2aff2a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(1px);
+        }
+
+        /* Верхняя панель терминала */
+        .terminal-bar {
+            background: #1e2a1e;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #2aff2a;
+            flex-wrap: wrap;
+        }
+
+        .terminal-title {
+            color: #9eff9e;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-size: 1.1rem;
+            text-shadow: 0 0 3px #0f0;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .control {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #2aff2a;
+            box-shadow: 0 0 4px #0f0;
+        }
+
+        .control.red { background: #ff5555; }
+        .control.yellow { background: #ffcc55; }
+        .control.green { background: #2aff2a; }
+
+        /* Поле вывода (история команд) */
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 22px;
+            color: #b3ffb3;
+            font-size: 1rem;
+            line-height: 1.45;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #0a0e0a;
+        }
+
+        /* Строка ввода */
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 22px 20px 22px;
+            background: #0c0f0c;
+            border-top: 1px solid #2aff2a40;
+            font-size: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .prompt {
+            color: #2eff2e;
+            font-weight: bold;
+            white-space: nowrap;
+            font-size: 1rem;
+            text-shadow: 0 0 2px #0f0;
+        }
+
+        #commandInput {
+            background: transparent;
+            border: none;
+            color: #d0ffd0;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            font-size: 1rem;
+            flex: 1;
+            outline: none;
+            caret-color: #0f0;
+            min-width: 100px;
+        }
+
+        /* Мигающий курсор (эффект) */
+        .cursor-blink {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background-color: #2eff2e;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Стили для отдельных сообщений */
+        .command-line {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: baseline;
+        }
+
+        .command-text {
+            color: #f0f0a0;
+            word-break: break-all;
+        }
+
+        .output {
+            color: #b0ffb0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-left: 16px;
+            border-left: 2px solid #2aff2a60;
+            padding-left: 14px;
+        }
+
+        .error-output {
+            color: #ff8a8a;
+        }
+
+        /* Скролл */
+        .terminal-output::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-output::-webkit-scrollbar-track {
+            background: #1e2a1e;
+        }
+        .terminal-output::-webkit-scrollbar-thumb {
+            background: #2aff2a;
+            border-radius: 8px;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 650px) {
+            .terminal-output {
+                padding: 12px;
+                font-size: 0.85rem;
+            }
+            .input-line {
+                padding: 8px 12px 16px;
+            }
+            .prompt {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="terminal-container">
+    <div class="terminal-bar">
+        <span class="terminal-title">anonymous@kali:~</span>
+        <div class="terminal-controls">
+            <div class="control red"></div>
+            <div class="control yellow"></div>
+            <div class="control green"></div>
+        </div>
+    </div>
+    <div class="terminal-output" id="terminalOutput">
+        <div class="command-line">
+            <span class="prompt">$</span>
+            <span class="command-text">./connect --secure</span>
+        </div>
+        <div class="output">> Добро пожаловать, аноним.<br>> Введите 'help' для списка команд.<br>> Терминал эмулирует базовые команды Linux.<br>> Доступны: ls, whoami, date, echo, clear, sudo, help, cat, uname, pwd, id, su, exit и другие.<br>> Для выхода из эмуляции просто обновите страницу или введите 'exit'.</div>
+        <div class="command-line">
+            <span class="prompt">$</span>
+            <span class="command-text">whoami</span>
+        </div>
+        <div class="output">anonymous</div>
+    </div>
+    <div class="input-line">
+        <span class="prompt">anonymous@terminal:~$</span>
+        <input type="text" id="commandInput" autofocus spellcheck="false" autocomplete="off">
+        <span class="cursor-blink"></span>
+    </div>
+</div>
+
+<script>
+    // Эмуляция файловой системы и команд
+    const terminalOutput = document.getElementById('terminalOutput');
+    const commandInput = document.getElementById('commandInput');
+    
+    // Псевдо-файловая структура для ls / cat
+    let currentDir = '/home/anonymous';
+    const fileSystem = {
+        '/home/anonymous': {
+            type: 'dir',
+            content: ['documents', 'downloads', 'secret.txt', 'script.sh']
+        },
+        '/home/anonymous/documents': {
+            type: 'dir',
+            content: ['notes.txt', 'plan.md']
+        },
+        '/home/anonymous/downloads': {
+            type: 'dir',
+            content: ['tool.py', 'payload.bin']
+        },
+        '/home/anonymous/secret.txt': {
+            type: 'file',
+            content: 'Ты нашёл скрытый ключ: AK-47#ne0n$amura1'
+        },
+        '/home/anonymous/script.sh': {
+            type: 'file',
+            content: '#!/bin/bash\necho "Hack the planet!"'
+        },
+        '/': {
+            type: 'dir',
+            content: ['home', 'usr', 'etc', 'var']
+        },
+        '/usr': {
+            type: 'dir',
+            content: ['bin', 'local', 'share']
+        }
+    };
+
+    // История команд (необязательно)
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    // Добавление строки в терминал
+    function addLine(text, isCommand = false, isError = false) {
+        const lineDiv = document.createElement('div');
+        if (isCommand) {
+            lineDiv.className = 'command-line';
+            const promptSpan = document.createElement('span');
+            promptSpan.className = 'prompt';
+            promptSpan.innerText = 'anonymous@terminal:~$';
+            const cmdSpan = document.createElement('span');
+            cmdSpan.className = 'command-text';
+            cmdSpan.innerText = text;
+            lineDiv.appendChild(promptSpan);
+            lineDiv.appendChild(cmdSpan);
+        } else {
+            lineDiv.className = 'output';
+            if (isError) lineDiv.classList.add('error-output');
+            lineDiv.innerHTML = text.replace(/\n/g, '<br>');
+        }
+        terminalOutput.appendChild(lineDiv);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    // Обработка команд (core)
+    function executeCommand(cmd) {
+        cmd = cmd.trim();
+        if (cmd === '') return;
+        
+        addLine(cmd, true);
+        
+        const parts = cmd.split(' ');
+        const baseCmd = parts[0].toLowerCase();
+        const args = parts.slice(1);
+        
+        let output = '';
+        
+        // Команды
+        switch (baseCmd) {
+            case 'help':
+                output = `Доступные команды:
+  ls [path]          - показать содержимое директории
+  whoami             - показать текущего пользователя
+  pwd                - показать текущую директорию
+  cd <dir>           - сменить директорию
+  cat <file>         - показать содержимое файла
+  date               - текущая дата и время
+  echo <text>        - вывести текст
+  clear              - очистить экран
+  sudo <cmd>         - эмуляция прав root (просто эффект)
+  uname -a           - информация о системе
+  id                 - показать UID/GID
+  su <user>          - смена пользователя (эмуляция)
+  exit               - завершить сессию (обновить страницу)
+  help               - эта справка`;
+                break;
+            case 'whoami':
+                output = 'anonymous';
+                break;
+            case 'pwd':
+                output = currentDir;
+                break;
+            case 'ls':
+                let targetPath = args.length > 0 ? args[0] : currentDir;
+                if (targetPath.startsWith('./')) targetPath = currentDir + '/' + targetPath.slice(2);
+                else if (targetPath === '..') {
+                    targetPath = currentDir.split('/').slice(0, -1).join('/') || '/';
+                } else if (targetPath === '.') targetPath = currentDir;
+                else if (!targetPath.startsWith('/')) targetPath = currentDir + '/' + targetPath;
+                // нормализация
+                targetPath = targetPath.replace(/\/+/g, '/');
+                if (fileSystem[targetPath] && fileSystem[targetPath].type === 'dir') {
+                    output = fileSystem[targetPath].content.join('  ');
+                } else {
+                    output = `ls: cannot access '${args[0]}': No such directory`;
+                }
+                break;
+            case 'cd':
+                if (args.length === 0) {
+                    currentDir = '/home/anonymous';
+                    output = '';
+                } else {
+                    let newPath = args[0];
+                    if (newPath === '..') {
+                        let parent = currentDir.split('/').slice(0, -1).join('/');
+                        currentDir = parent === '' ? '/' : parent;
+                    } else if (newPath === '/') {
+                        currentDir = '/';
+                    } else if (newPath.startsWith('/')) {
+                        if (fileSystem[newPath] && fileSystem[newPath].type === 'dir') currentDir = newPath;
+                        else output = `cd: no such directory: ${newPath}`;
+                    } else {
+                        let testPath = currentDir + '/' + newPath;
+                        if (fileSystem[testPath] && fileSystem[testPath].type === 'dir') currentDir = testPath;
+                        else output = `cd: ${newPath}: No such directory`;
+                    }
+                }
+                break;
+            case 'cat':
+                if (args.length === 0) output = 'cat: missing file operand';
+                else {
+                    let filePath = args[0];
+                    if (!filePath.startsWith('/')) filePath = currentDir + '/' + filePath;
+                    if (fileSystem[filePath] && fileSystem[filePath].type === 'file') {
+                        output = fileSystem[filePath].content;
+                    } else {
+                        output = `cat: ${args[0]}: No such file`;
+                    }
+                }
+                break;
+            case 'date':
+                output = new Date().toString();
+                break;
+            case 'echo':
+                output = args.join(' ');
+                break;
+            case 'clear':
+                terminalOutput.innerHTML = '';
+                // добавим приветствие после очистки
+                addLine('Терминал очищен. Введите help.', false);
+                return;
+            case 'sudo':
+                if (args.length === 0) output = 'sudo: missing command';
+                else {
+                    output = `[sudo] password for anonymous: \nВыполняется с повышенными привилегиями...\n`;
+                    let fakeCmd = args.join(' ');
+                    output += `> ${fakeCmd} (эмуляция)`;
+                }
+                break;
+            case 'uname':
+                if (args.includes('-a')) output = 'Linux anonymous 5.15.0-kali3-amd64 #1 SMP x86_64 GNU/Linux';
+                else output = 'Linux';
+                break;
+            case 'id':
+                output = 'uid=1000(anonymous) gid=1000(anonymous) groups=1000(anonymous),27(sudo),100(users)';
+                break;
+            case 'su':
+                let targetUser = args[0] || 'root';
+                output = `Смена пользователя на ${targetUser}...\nТребуется аутентификация (демо-режим). Доступ ограничен.`;
+                break;
+            case 'exit':
+                output = 'Завершение сессии... Обновите страницу для нового подключения.';
+                addLine(output, false);
+                setTimeout(() => location.reload(), 1500);
+                return;
+            default:
+                output = `bash: ${baseCmd}: command not found`;
+                addLine(output, false, true);
+                return;
+        }
+        if (output) addLine(output, false);
+    }
+    
+    // Обработка ввода
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = commandInput.value;
+            if (cmd.trim() !== '') {
+                commandHistory.push(cmd);
+                historyIndex = commandHistory.length;
+                executeCommand(cmd);
+            }
+            commandInput.value = '';
+            setTimeout(() => commandInput.focus(), 10);
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+            e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            e.preventDefault();
+        }
+    });
+    
+    // Автофокус при клике на терминал
+    document.body.addEventListener('click', () => commandInput.focus());
+    commandInput.focus();
+    
+    // Эффект приветствия
+    setTimeout(() => {
+        addLine('> Система готова. Используйте стрелки вверх/вниз для истории команд.', false);
+    }, 500);
+</script>
+</body>
+</html>
