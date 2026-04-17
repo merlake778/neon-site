@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>S.T.A.L.K.E.R. - Инвентарь</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 10%, #1a2a1a, #030703);
+            font-family: 'Courier New', 'Segoe UI', monospace;
+            padding: 30px 20px;
+            color: #cfd9cf;
+            min-height: 100vh;
+        }
+
+        /* Общий контейнер */
+        .stalker-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            border-radius: 32px;
+            border: 1px solid #7a6a3a;
+            box-shadow: 0 0 25px rgba(100, 80, 20, 0.5);
+            padding: 25px;
+        }
+
+        /* Заголовок с ржавым эффектом */
+        h1 {
+            text-align: center;
+            font-size: 2.4rem;
+            letter-spacing: 4px;
+            color: #ecd88f;
+            text-shadow: 3px 3px 0px #4a3a1a;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+
+        .zone-badge {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #b8a56e;
+            border-top: 1px dashed #7a6a3a;
+            border-bottom: 1px dashed #7a6a3a;
+            display: inline-block;
+            width: auto;
+            margin: 0 auto 25px;
+            padding: 6px 20px;
+            background: #1e2a1a80;
+        }
+
+        /* Две основные колонки */
+        .inventory-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .column {
+            flex: 1;
+            min-width: 260px;
+            background: #0e120eaa;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid #5e5a3a;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .column h2 {
+            font-size: 1.7rem;
+            border-left: 6px solid #e0b85c;
+            padding-left: 15px;
+            margin-bottom: 20px;
+            color: #f5de9e;
+        }
+
+        /* Баланс и управление деньгами */
+        .money-area {
+            background: #00000066;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .money-display {
+            font-size: 2.3rem;
+            font-weight: bold;
+            color: #ffe68f;
+            text-shadow: 0 0 5px #ffaa33;
+            background: #1e2a1a;
+            display: inline-block;
+            padding: 5px 25px;
+            border-radius: 50px;
+            letter-spacing: 2px;
+        }
+
+        .money-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .money-btn {
+            background: #2a2a1a;
+            border: 1px solid #b8a254;
+            color: #f5e2a4;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: monospace;
+        }
+
+        .money-btn:hover {
+            background: #4a4a2a;
+            box-shadow: 0 0 6px #ffcc55;
+            transform: scale(1.02);
+        }
+
+        /* Список инвентаря (предметы) */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .item-row {
+            background: #1e2a1a99;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 30px;
+            border: 1px solid #5a623a;
+            flex-wrap: wrap;
+        }
+
+        .item-name {
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        .item-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .item-controls button {
+            background: #2a2a1a;
+            border: none;
+            color: #ecd88f;
+            font-weight: bold;
+            font-size: 1.1rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .item-controls button:hover {
+            background: #6a5a2a;
+            color: white;
+        }
+
+        .item-price {
+            font-size: 0.8rem;
+            background: #00000077;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-left: 5px;
+        }
+
+        .equip-badge {
+            background: #2f6a2a;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 30px;
+            margin-left: 10px;
+            color: #bfffb0;
+        }
+
+        hr {
+            border-color: #5a4a2a;
+            margin: 15px 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: #cfb87c;
+            text-decoration: none;
+            border-bottom: 1px dashed;
+        }
+
+        .back-link:hover {
+            color: #ffeaac;
+        }
+
+        button.danger {
+            background: #5a2a2a;
+        }
+        button.danger:hover {
+            background: #8a3a3a;
+        }
+
+        @media (max-width: 800px) {
+            .stalker-container { padding: 15px; }
+            .money-display { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="stalker-container">
+    <h1>☢️ S.T.A.L.K.E.R. ☠️</h1>
+    <div style="text-align: center;"><span class="zone-badge">Зона отчуждения — инвентарь сталкера</span></div>
+
+    <div class="inventory-grid">
+        <!-- Левая колонка: деньги и аптечки/артефакты -->
+        <div class="column">
+            <h2>💰 Бартер</h2>
+            <div class="money-area">
+                <div class="money-display" id="moneyDisplay">250 $</div>
+                <div class="money-buttons">
+                    <button class="money-btn" id="addMoneyBtn">+10 $</button>
+                    <button class="money-btn" id="subMoneyBtn">-10 $</button>
+                    <button class="money-btn" id="add50Btn">+50 $</button>
+                    <button class="money-btn danger" id="resetMoneyBtn">Сброс (250$)</button>
+                </div>
+            </div>
+
+            <h2>🧪 Расходники</h2>
+            <div class="item-list" id="consumablesList"></div>
+
+            <h2>🔮 Артефакты</h2>
+            <div class="item-list" id="artifactsList"></div>
+        </div>
+
+        <!-- Правая колонка: одежда, броня и оружие -->
+        <div class="column">
+            <h2>🧥 Экипировка</h2>
+            <div class="item-list" id="armorList"></div>
+            
+            <h2>🔫 Оружие</h2>
+            <div class="item-list" id="weaponsList"></div>
+            <hr>
+            <button id="clearAllBtn" class="money-btn danger" style="width:100%;">🚫 Сбросить инвентарь (кроме денег)</button>
+        </div>
+    </div>
+    <a href="index.html" class="back-link">← Вернуться в убежище</a>
+</div>
+
+<script>
+    // ---------- НАЧАЛЬНЫЕ ДАННЫЕ ----------
+    let stalkerData = {
+        money: 250,
+        inventory: {
+            // расходники
+            "Аптечка": { count: 2, price: 15, type: "consumable" },
+            "Бинты": { count: 3, price: 8, type: "consumable" },
+            "Консервы": { count: 4, price: 12, type: "consumable" },
+            "Водка": { count: 1, price: 20, type: "consumable" },
+            // артефакты
+            "Кровь камня": { count: 0, price: 180, type: "artifact" },
+            "Медуза": { count: 0, price: 220, type: "artifact" },
+            "Батарейка": { count: 0, price: 300, type: "artifact" },
+            // броня/костюмы (одежда)
+            "Бандитская куртка": { count: 1, price: 70, type: "armor", equipped: true },
+            "Сталкерский комбез": { count: 0, price: 180, type: "armor", equipped: false },
+            "Экзоскелет": { count: 0, price: 650, type: "armor", equipped: false },
+            "Научный костюм": { count: 0, price: 420, type: "armor", equipped: false },
+            // оружие
+            "ПМ (пистолет)": { count: 1, price: 85, type: "weapon", equipped: true },
+            "Обрез": { count: 0, price: 140, type: "weapon", equipped: false },
+            "АК-74у": { count: 0, price: 380, type: "weapon", equipped: false },
+            "Винторез": { count: 0, price: 550, type: "weapon", equipped: false }
+        }
+    };
+
+    // Ключ localStorage
+    const STALKER_KEY = 'stalker_inv';
+
+    // Загрузка / инициализация
+    function loadData() {
+        const saved = localStorage.getItem(STALKER_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            stalkerData.money = parsed.money;
+            // обновить инвентарь, но сохранить структуру
+            for (let key in stalkerData.inventory) {
+                if (parsed.inventory[key]) {
+                    stalkerData.inventory[key].count = parsed.inventory[key].count;
+                    if (parsed.inventory[key].equipped !== undefined)
+                        stalkerData.inventory[key].equipped = parsed.inventory[key].equipped;
+                }
+            }
+        }
+    }
+
+    function saveData() {
+        const toSave = {
+            money: stalkerData.money,
+            inventory: {}
+        };
+        for (let key in stalkerData.inventory) {
+            toSave.inventory[key] = {
+                count: stalkerData.inventory[key].count,
+                equipped: stalkerData.inventory[key].equipped || false,
+                price: stalkerData.inventory[key].price,
+                type: stalkerData.inventory[key].type
+            };
+        }
+        localStorage.setItem(STALKER_KEY, JSON.stringify(toSave));
+    }
+
+    // Обновление UI
+    function renderAll() {
+        document.getElementById('moneyDisplay').innerText = stalkerData.money + ' $';
+        
+        // разделяем предметы по категориям
+        const consumables = [];
+        const artifacts = [];
+        const armors = [];
+        const weapons = [];
+        
+        for (let [name, item] of Object.entries(stalkerData.inventory)) {
+            if (item.type === 'consumable') consumables.push({name, ...item});
+            else if (item.type === 'artifact') artifacts.push({name, ...item});
+            else if (item.type === 'armor') armors.push({name, ...item});
+            else if (item.type === 'weapon') weapons.push({name, ...item});
+        }
+        
+        renderCategory('consumablesList', consumables, true);
+        renderCategory('artifactsList', artifacts, true);
+        renderCategory('armorList', armors, true);
+        renderCategory('weaponsList', weapons, true);
+    }
+    
+    function renderCategory(containerId, items, showEquip = true) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (items.length === 0) {
+            container.innerHTML = '<div class="item-row">— пусто —</div>';
+            return;
+        }
+        container.innerHTML = '';
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            const canAffordBuy = stalkerData.money >= item.price;
+            const canSell = item.count > 0;
+            const equipStatus = (item.equipped && showEquip) ? `<span class="equip-badge">✔️ экипировано</span>` : '';
+            row.innerHTML = `
+                <div class="item-name">${item.name} ${equipStatus}<div class="item-price">${item.price}$</div></div>
+                <div class="item-controls">
+                    <button class="sell-btn" data-name="${item.name}" ${!canSell ? 'disabled style="opacity:0.4;"' : ''}>-</button>
+                    <span style="min-width: 40px; text-align:center; font-weight:bold;">${item.count}</span>
+                    <button class="buy-btn" data-name="${item.name}" ${!canAffordBuy ? 'disabled style="opacity:0.4;"' : ''}>+</button>
+                    ${showEquip && (item.type === 'armor' || item.type === 'weapon') ? `<button class="equip-btn" data-name="${item.name}" style="margin-left:8px; background:#3a5a2a;">⚙️</button>` : ''}
+                </div>
+            `;
+            container.appendChild(row);
+        });
+        
+        // привязать события
+        document.querySelectorAll(`#${containerId} .buy-btn`).forEach(btn => {
+            btn.removeEventListener('click', buyHandler);
+            btn.addEventListener('click', buyHandler);
+        });
+        document.querySelectorAll(`#${containerId} .sell-btn`).forEach(btn => {
+            btn.removeEventListener('click', sellHandler);
+            btn.addEventListener('click', sellHandler);
+        });
+        document.querySelectorAll(`#${containerId} .equip-btn`).forEach(btn => {
+            btn.removeEventListener('click', equipHandler);
+            btn.addEventListener('click', equipHandler);
+        });
+    }
+    
+    function buyHandler(e) {
+        const itemName = e.currentTarget.getAttribute('data-name');
+        const item = stalkerData.inventory[itemName];
+        if (!item) return;
+        if (stalkerData.money >= item.price) {
+            stalkerData.money -= item.price;
+            item.count++;
+            saveData();
+            renderAll();
+        } else {
+            alert("Не хватает денег, сталкер!");
+        }
+    }
+    
+    function sellHandler(e) {
+        const itemName = e.currentTarget.getAttribute('data-name');
+        const item = stalkerData.inventory[itemName];
+        if (!item) return;
+        if (item.count > 0) {
+            item.count--;
+            stalkerData.money += Math.floor(item.price * 0.7); // продажа за 70% цены
+            saveData();
+            renderAll();
+        }
+    }
+    
+    function equipHandler(e) {
+        const itemName = e.currentTarget.getAttribute('data-name');
+        const item = stalkerData.inventory[itemName];
+        if (!item) return;
+        if (item.count === 0) {
+            alert("У вас нет этого предмета в инвентаре!");
+            return;
+        }
+        // для брони: снимаем экипировку с других предметов того же типа
+        const type = item.type;
+        for (let [name, it] of Object.entries(stalkerData.inventory)) {
+            if (it.type === type && it.equipped) {
+                it.equipped = false;
+            }
+        }
+        item.equipped = true;
+        saveData();
+        renderAll();
+    }
+    
+    // управление деньгами
+    document.getElementById('addMoneyBtn').addEventListener('click', () => {
+        stalkerData.money += 10;
+        saveData();
+        renderAll();
+    });
+    document.getElementById('subMoneyBtn').addEventListener('click', () => {
+        if (stalkerData.money >= 10) stalkerData.money -= 10;
+        else alert("Недостаточно средств");
+        saveData();
+        renderAll();
+    });
+    document.getElementById('add50Btn').addEventListener('click', () => {
+        stalkerData.money += 50;
+        saveData();
+        renderAll();
+    });
+    document.getElementById('resetMoneyBtn').addEventListener('click', () => {
+        stalkerData.money = 250;
+        saveData();
+        renderAll();
+    });
+    
+    // сброс инвентаря (кроме денег) - все предметы обнулить, кроме начальных "одетых"?
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+        if (confirm("Сбросить инвентарь до начального (деньги останутся)?")) {
+            // начальные настройки
+            const resetInventory = {
+                "Аптечка": { count: 2, price: 15, type: "consumable" },
+                "Бинты": { count: 3, price: 8, type: "consumable" },
+                "Консервы": { count: 4, price: 12, type: "consumable" },
+                "Водка": { count: 1, price: 20, type: "consumable" },
+                "Кровь камня": { count: 0, price: 180, type: "artifact" },
+                "Медуза": { count: 0, price: 220, type: "artifact" },
+                "Батарейка": { count: 0, price: 300, type: "artifact" },
+                "Бандитская куртка": { count: 1, price: 70, type: "armor", equipped: true },
+                "Сталкерский комбез": { count: 0, price: 180, type: "armor", equipped: false },
+                "Экзоскелет": { count: 0, price: 650, type: "armor", equipped: false },
+                "Научный костюм": { count: 0, price: 420, type: "armor", equipped: false },
+                "ПМ (пистолет)": { count: 1, price: 85, type: "weapon", equipped: true },
+                "Обрез": { count: 0, price: 140, type: "weapon", equipped: false },
+                "АК-74у": { count: 0, price: 380, type: "weapon", equipped: false },
+                "Винторез": { count: 0, price: 550, type: "weapon", equipped: false }
+            };
+            stalkerData.inventory = resetInventory;
+            saveData();
+            renderAll();
+        }
+    });
+    
+    loadData();
+    renderAll();
+</script>
+</body>
+</html>
