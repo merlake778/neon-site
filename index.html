@@ -9,13 +9,11 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* чтобы не выделялся текст при кликах */
+            user-select: none;
         }
-
         body {
             min-height: 100vh;
             background: #0a0c12;
-            /* ФОН: меч самурая (тёмный эстетичный образ) */
             background-image: url('https://images.pexels.com/photos/17452687/pexels-photo-17452687.jpeg?auto=compress&cs=tinysrgb&w=1600&lazy=load');
             background-size: cover;
             background-position: center 30%;
@@ -27,8 +25,6 @@
             align-items: flex-start;
             justify-content: flex-start;
         }
-
-        /* Затемнение для читаемости текста (чтобы меч не перебивал меню) */
         body::before {
             content: "";
             position: fixed;
@@ -41,36 +37,22 @@
             z-index: 0;
             pointer-events: none;
         }
-
-        /* ----- НЕОНОВАЯ РАМКА ПО ВСЕМУ ОБОДКУ ЭКРАНА ----- */
         .neon-border {
             position: fixed;
             top: 20px;
             left: 20px;
             right: 20px;
             bottom: 20px;
-            pointer-events: none;  /* чтобы клики проходили сквозь рамку */
+            pointer-events: none;
             border-radius: 28px;
-            box-shadow: 
-                0 0 8px #0ff,
-                0 0 15px #0ff,
-                inset 0 0 8px #0ff;
+            box-shadow: 0 0 8px #0ff, 0 0 15px #0ff, inset 0 0 8px #0ff;
             animation: neonPulse 1.8s infinite alternate;
             z-index: 10;
         }
-
         @keyframes neonPulse {
-            0% {
-                box-shadow: 0 0 5px cyan, 0 0 10px cyan, inset 0 0 4px cyan;
-                border: 1px solid rgba(0, 255, 255, 0.5);
-            }
-            100% {
-                box-shadow: 0 0 18px cyan, 0 0 28px #00ccff, inset 0 0 12px cyan;
-                border: 1px solid rgba(0, 255, 255, 0.9);
-            }
+            0% { box-shadow: 0 0 5px cyan, 0 0 10px cyan, inset 0 0 4px cyan; border: 1px solid rgba(0, 255, 255, 0.5); }
+            100% { box-shadow: 0 0 18px cyan, 0 0 28px #00ccff, inset 0 0 12px cyan; border: 1px solid rgba(0, 255, 255, 0.9); }
         }
-
-        /* Блок меню (слева) */
         .menu-container {
             position: relative;
             z-index: 20;
@@ -83,7 +65,6 @@
             box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
             border: 1px solid rgba(0, 255, 255, 0.3);
         }
-
         .menu-title {
             text-align: center;
             font-size: 28px;
@@ -98,20 +79,15 @@
             width: 100%;
             padding-bottom: 12px;
         }
-
-        /* Список кнопок */
         .menu-list {
             display: flex;
             flex-direction: column;
             gap: 18px;
             list-style: none;
         }
-
         .menu-list li {
             width: 100%;
         }
-
-        /* Стили самих кнопок-ссылок */
         .neon-btn {
             display: block;
             text-align: center;
@@ -129,10 +105,7 @@
             transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            position: relative;
         }
-
-        /* Эффект при наведении: сдвиг, неон, увеличение шрифта, свечение */
         .neon-btn:hover {
             transform: translateX(12px) translateY(-3px) scale(1.05);
             font-size: 1.75rem;
@@ -142,50 +115,23 @@
             border-color: cyan;
             box-shadow: 0 0 15px cyan, 0 5px 20px rgba(0,255,255,0.4);
             letter-spacing: 2px;
-        }
-
-        /* Дополнительная анимация лёгкого покачивания при наведении (движение) */
-        .neon-btn:hover {
             animation: subtleWobble 0.3s ease;
         }
-
         @keyframes subtleWobble {
             0% { transform: translateX(8px) translateY(-2px) scale(1.02); }
             50% { transform: translateX(14px) translateY(-4px) scale(1.06); }
             100% { transform: translateX(12px) translateY(-3px) scale(1.05); }
         }
-
-        /* Активный клик (легкое нажатие) */
         .neon-btn:active {
             transform: scale(0.98) translateX(8px);
             transition: 0.02s;
         }
-
-        /* Для мобильных устройств — чуть адаптивнее */
         @media (max-width: 700px) {
-            .menu-container {
-                width: 240px;
-                margin-left: 20px;
-                margin-top: 30px;
-                padding: 20px 15px;
-            }
-            .neon-btn {
-                font-size: 1.2rem;
-                padding: 8px 0;
-            }
-            .neon-btn:hover {
-                font-size: 1.4rem;
-                transform: translateX(6px) translateY(-2px);
-            }
-            .neon-border {
-                top: 12px;
-                left: 12px;
-                right: 12px;
-                bottom: 12px;
-            }
+            .menu-container { width: 240px; margin-left: 20px; margin-top: 30px; padding: 20px 15px; }
+            .neon-btn { font-size: 1.2rem; padding: 8px 0; }
+            .neon-btn:hover { font-size: 1.4rem; transform: translateX(6px) translateY(-2px); }
+            .neon-border { top: 12px; left: 12px; right: 12px; bottom: 12px; }
         }
-
-        /* стиль для нижнего предупреждения (не обязательно) */
         .hint {
             position: fixed;
             bottom: 15px;
@@ -203,52 +149,22 @@
     </style>
 </head>
 <body>
-
-<!-- Неоновая рамка по периметру (ободок) -->
 <div class="neon-border"></div>
-
 <div class="menu-container">
     <div class="menu-title">⚔️ BUSHIDO ⚔️</div>
     <ul class="menu-list">
-        <!-- Генерируем 10 пунктов от one до ten -->
-        <li><a href="/one" class="neon-btn" data-id="1">ONE</a></li>
-        <li><a href="/two" class="neon-btn" data-id="2">TWO</a></li>
-        <li><a href="/three" class="neon-btn" data-id="3">THREE</a></li>
-        <li><a href="/four" class="neon-btn" data-id="4">FOUR</a></li>
-        <li><a href="/five" class="neon-btn" data-id="5">FIVE</a></li>
-        <li><a href="/six" class="neon-btn" data-id="6">SIX</a></li>
-        <li><a href="/seven" class="neon-btn" data-id="7">SEVEN</a></li>
-        <li><a href="/eight" class="neon-btn" data-id="8">EIGHT</a></li>
-        <li><a href="/nine" class="neon-btn" data-id="9">NINE</a></li>
-        <li><a href="/ten" class="neon-btn" data-id="10">TEN</a></li>
+        <li><a href="anonymous.html" class="neon-btn">Anonymous</a></li>
+        <li><a href="/two" class="neon-btn">TWO</a></li>
+        <li><a href="/three" class="neon-btn">THREE</a></li>
+        <li><a href="/four" class="neon-btn">FOUR</a></li>
+        <li><a href="/five" class="neon-btn">FIVE</a></li>
+        <li><a href="/six" class="neon-btn">SIX</a></li>
+        <li><a href="/seven" class="neon-btn">SEVEN</a></li>
+        <li><a href="/eight" class="neon-btn">EIGHT</a></li>
+        <li><a href="/nine" class="neon-btn">NINE</a></li>
+        <li><a href="/ten" class="neon-btn">TEN</a></li>
     </ul>
 </div>
 <div class="hint">⚡ клик — страница не найдена (404) ⚡</div>
-
-<script>
-    // Дополнительно: чтобы при клике гарантированно была 404 страница,
-    // можно перехватывать клики и отправлять на несуществующий URL
-    // (но href уже ведёт на несуществующие /one, /two и т.д. – это вызовет 404,
-    // так как этих страниц нет в репозитории.)
-    // Однако если сайт будет лежать в корне GitHub Pages, то переход по /one
-    // действительно вернёт кастомную страницу 404. 
-    // Для надёжности добавим небольшую обработку: если ссылка ведёт на локацию, 
-    // которой нет, браузер сам покажет 404. 
-    // Но также можем выводить консольное сообщение.
-    // Дополнительно: чтобы не было якоря "#", ничего не меняем.
-
-    // Можно красиво предупреждать, но условие - "ошибка 404". Оставляем как есть.
-    // При желании, если вы хотите явно показать сообщение, раскомментируйте:
-    /*
-    const btns = document.querySelectorAll('.neon-btn');
-    btns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // не отменяем действие, пусть идёт на несуществующий URL
-            console.log(`Переход на ${btn.getAttribute('href')} — будет 404`);
-        });
-    });
-    */
-</script>
-
 </body>
 </html>
