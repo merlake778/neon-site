@@ -21,7 +21,6 @@
             padding: 20px;
         }
 
-        /* Контейнер терминала с неоновой рамкой */
         .terminal-container {
             width: 100%;
             max-width: 1100px;
@@ -33,10 +32,8 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            backdrop-filter: blur(1px);
         }
 
-        /* Верхняя панель терминала */
         .terminal-bar {
             background: #1e2a1e;
             padding: 12px 18px;
@@ -44,7 +41,6 @@
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #2aff2a;
-            flex-wrap: wrap;
         }
 
         .terminal-title {
@@ -73,7 +69,6 @@
         .control.yellow { background: #ffcc55; }
         .control.green { background: #2aff2a; }
 
-        /* Поле вывода (история команд) */
         .terminal-output {
             flex: 1;
             overflow-y: auto;
@@ -87,7 +82,6 @@
             background: #0a0e0a;
         }
 
-        /* Строка ввода */
         .input-line {
             display: flex;
             align-items: center;
@@ -96,14 +90,12 @@
             background: #0c0f0c;
             border-top: 1px solid #2aff2a40;
             font-size: 1rem;
-            flex-wrap: wrap;
         }
 
         .prompt {
             color: #2eff2e;
             font-weight: bold;
             white-space: nowrap;
-            font-size: 1rem;
             text-shadow: 0 0 2px #0f0;
         }
 
@@ -116,10 +108,8 @@
             flex: 1;
             outline: none;
             caret-color: #0f0;
-            min-width: 100px;
         }
 
-        /* Мигающий курсор (эффект) */
         .cursor-blink {
             display: inline-block;
             width: 10px;
@@ -127,7 +117,6 @@
             background-color: #2eff2e;
             vertical-align: middle;
             animation: blink 1s step-end infinite;
-            margin-left: 2px;
         }
 
         @keyframes blink {
@@ -135,7 +124,6 @@
             50% { opacity: 0; }
         }
 
-        /* Стили для отдельных сообщений */
         .command-line {
             display: flex;
             gap: 12px;
@@ -161,7 +149,29 @@
             color: #ff8a8a;
         }
 
-        /* Скролл */
+        /* Стиль для таблицы сетей */
+        .wifi-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+        .wifi-table th, .wifi-table td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px dotted #2aff2a60;
+        }
+        .wifi-table th {
+            color: #9eff9e;
+            text-shadow: 0 0 2px #0f0;
+        }
+        .signal-strength {
+            font-weight: bold;
+        }
+        .signal-high { color: #2eff2e; }
+        .signal-mid { color: #e5ff00; }
+        .signal-low { color: #ffaa44; }
+
         .terminal-output::-webkit-scrollbar {
             width: 6px;
         }
@@ -173,25 +183,17 @@
             border-radius: 8px;
         }
 
-        /* Мобильная адаптация */
         @media (max-width: 650px) {
-            .terminal-output {
-                padding: 12px;
-                font-size: 0.85rem;
-            }
-            .input-line {
-                padding: 8px 12px 16px;
-            }
-            .prompt {
-                font-size: 0.85rem;
-            }
+            .terminal-output { padding: 12px; font-size: 0.85rem; }
+            .input-line { padding: 8px 12px 16px; }
+            .prompt { font-size: 0.85rem; }
         }
     </style>
 </head>
 <body>
 <div class="terminal-container">
     <div class="terminal-bar">
-        <span class="terminal-title">anonymous@kali:~</span>
+        <span class="terminal-title">anonymous@kali:~/tools</span>
         <div class="terminal-controls">
             <div class="control red"></div>
             <div class="control yellow"></div>
@@ -203,7 +205,7 @@
             <span class="prompt">$</span>
             <span class="command-text">./connect --secure</span>
         </div>
-        <div class="output">> Добро пожаловать, аноним.<br>> Введите 'help' для списка команд.<br>> Терминал эмулирует базовые команды Linux.<br>> Доступны: ls, whoami, date, echo, clear, sudo, help, cat, uname, pwd, id, su, exit и другие.<br>> Для выхода из эмуляции просто обновите страницу или введите 'exit'.</div>
+        <div class="output">> Добро пожаловать, аноним.<br>> Введите 'help' для списка команд.<br>> Новые команды: <span style="color:#ffff80">router</span> — показать список Wi-Fi сетей.</div>
         <div class="command-line">
             <span class="prompt">$</span>
             <span class="command-text">whoami</span>
@@ -218,48 +220,24 @@
 </div>
 
 <script>
-    // Эмуляция файловой системы и команд
+    // Эмуляция файловой системы
     const terminalOutput = document.getElementById('terminalOutput');
     const commandInput = document.getElementById('commandInput');
     
-    // Псевдо-файловая структура для ls / cat
     let currentDir = '/home/anonymous';
     const fileSystem = {
-        '/home/anonymous': {
-            type: 'dir',
-            content: ['documents', 'downloads', 'secret.txt', 'script.sh']
-        },
-        '/home/anonymous/documents': {
-            type: 'dir',
-            content: ['notes.txt', 'plan.md']
-        },
-        '/home/anonymous/downloads': {
-            type: 'dir',
-            content: ['tool.py', 'payload.bin']
-        },
-        '/home/anonymous/secret.txt': {
-            type: 'file',
-            content: 'Ты нашёл скрытый ключ: AK-47#ne0n$amura1'
-        },
-        '/home/anonymous/script.sh': {
-            type: 'file',
-            content: '#!/bin/bash\necho "Hack the planet!"'
-        },
-        '/': {
-            type: 'dir',
-            content: ['home', 'usr', 'etc', 'var']
-        },
-        '/usr': {
-            type: 'dir',
-            content: ['bin', 'local', 'share']
-        }
+        '/home/anonymous': { type: 'dir', content: ['documents', 'downloads', 'secret.txt', 'script.sh'] },
+        '/home/anonymous/documents': { type: 'dir', content: ['notes.txt', 'plan.md'] },
+        '/home/anonymous/downloads': { type: 'dir', content: ['tool.py', 'payload.bin'] },
+        '/home/anonymous/secret.txt': { type: 'file', content: 'Ты нашёл скрытый ключ: AK-47#ne0n$amura1' },
+        '/home/anonymous/script.sh': { type: 'file', content: '#!/bin/bash\necho "Hack the planet!"' },
+        '/': { type: 'dir', content: ['home', 'usr', 'etc', 'var'] },
+        '/usr': { type: 'dir', content: ['bin', 'local', 'share'] }
     };
 
-    // История команд (необязательно)
     let commandHistory = [];
     let historyIndex = -1;
 
-    // Добавление строки в терминал
     function addLine(text, isCommand = false, isError = false) {
         const lineDiv = document.createElement('div');
         if (isCommand) {
@@ -281,36 +259,69 @@
         terminalOutput.scrollTop = terminalOutput.scrollHeight;
     }
 
-    // Обработка команд (core)
+    // Генерация случайного списка сетей
+    function generateNetworks() {
+        const networks = [
+            { ssid: "Free_WiFi_2.4", channel: 1, encryption: "WPA2", signal: 85 },
+            { ssid: "Huawei_Home_5G", channel: 36, encryption: "WPA3", signal: 92 },
+            { ssid: "Xiaomi_Redmi_AC2100", channel: 6, encryption: "WPA2", signal: 47 },
+            { ssid: "Starbucks_WiFi", channel: 11, encryption: "Open", signal: 33 },
+            { ssid: "Hidden_Network", channel: 9, encryption: "WPA2", signal: 28 },
+            { ssid: "Anonymous_Lab", channel: 44, encryption: "WPA2", signal: 76 },
+            { ssid: "TP-Link_1234", channel: 1, encryption: "WPA", signal: 55 },
+            { ssid: "DIR-615", channel: 6, encryption: "WPA2", signal: 41 },
+            { ssid: "AndroidAP_8a3f", channel: 11, encryption: "WPA2", signal: 68 },
+            { ssid: "Kali_Net", channel: 149, encryption: "WPA3", signal: 91 }
+        ];
+        // Добавим случайный сдвиг сигнала для реализма
+        return networks.map(n => ({ ...n, signal: Math.min(100, Math.max(0, n.signal + (Math.random() * 20 - 10))) }));
+    }
+
+    function showRouterNetworks() {
+        let networks = generateNetworks();
+        // Сортируем по сигналу (от сильного к слабому)
+        networks.sort((a,b) => b.signal - a.signal);
+        let table = '<table class="wifi-table">\n<tr><th>SSID</th><th>Канал</th><th>Шифрование</th><th>Сигнал</th></tr>\n';
+        for (let net of networks) {
+            let signalClass = '';
+            if (net.signal >= 70) signalClass = 'signal-high';
+            else if (net.signal >= 40) signalClass = 'signal-mid';
+            else signalClass = 'signal-low';
+            let signalBar = '█'.repeat(Math.floor(net.signal / 10)) + '░'.repeat(10 - Math.floor(net.signal / 10));
+            table += `<tr><td>${net.ssid}</td><td>${net.channel}</td><td>${net.encryption}</td><td class="signal-strength ${signalClass}">${signalBar} ${Math.round(net.signal)}%</td></tr>\n`;
+        }
+        table += '</table>';
+        return table;
+    }
+
     function executeCommand(cmd) {
         cmd = cmd.trim();
         if (cmd === '') return;
-        
         addLine(cmd, true);
-        
         const parts = cmd.split(' ');
         const baseCmd = parts[0].toLowerCase();
         const args = parts.slice(1);
-        
         let output = '';
-        
-        // Команды
+
         switch (baseCmd) {
             case 'help':
                 output = `Доступные команды:
-  ls [path]          - показать содержимое директории
-  whoami             - показать текущего пользователя
-  pwd                - показать текущую директорию
-  cd <dir>           - сменить директорию
-  cat <file>         - показать содержимое файла
-  date               - текущая дата и время
+  ls [path]          - список файлов/папок
+  whoami             - текущий пользователь
+  pwd                - текущая директория
+  cd <dir>           - смена директории
+  cat <file>         - показать файл
+  date               - дата и время
   echo <text>        - вывести текст
   clear              - очистить экран
-  sudo <cmd>         - эмуляция прав root (просто эффект)
+  sudo <cmd>         - эмуляция root
   uname -a           - информация о системе
-  id                 - показать UID/GID
-  su <user>          - смена пользователя (эмуляция)
-  exit               - завершить сессию (обновить страницу)
+  id                 - UID/GID
+  su <user>          - смена пользователя
+  exit               - завершить сессию
+  router             - показать список доступных Wi-Fi сетей (эмуляция)
+  networks           - алиас для router
+  wifi --scan        - тоже алиас
   help               - эта справка`;
                 break;
             case 'whoami':
@@ -322,11 +333,9 @@
             case 'ls':
                 let targetPath = args.length > 0 ? args[0] : currentDir;
                 if (targetPath.startsWith('./')) targetPath = currentDir + '/' + targetPath.slice(2);
-                else if (targetPath === '..') {
-                    targetPath = currentDir.split('/').slice(0, -1).join('/') || '/';
-                } else if (targetPath === '.') targetPath = currentDir;
+                else if (targetPath === '..') targetPath = currentDir.split('/').slice(0, -1).join('/') || '/';
+                else if (targetPath === '.') targetPath = currentDir;
                 else if (!targetPath.startsWith('/')) targetPath = currentDir + '/' + targetPath;
-                // нормализация
                 targetPath = targetPath.replace(/\/+/g, '/');
                 if (fileSystem[targetPath] && fileSystem[targetPath].type === 'dir') {
                     output = fileSystem[targetPath].content.join('  ');
@@ -335,17 +344,14 @@
                 }
                 break;
             case 'cd':
-                if (args.length === 0) {
-                    currentDir = '/home/anonymous';
-                    output = '';
-                } else {
+                if (args.length === 0) currentDir = '/home/anonymous';
+                else {
                     let newPath = args[0];
                     if (newPath === '..') {
                         let parent = currentDir.split('/').slice(0, -1).join('/');
                         currentDir = parent === '' ? '/' : parent;
-                    } else if (newPath === '/') {
-                        currentDir = '/';
-                    } else if (newPath.startsWith('/')) {
+                    } else if (newPath === '/') currentDir = '/';
+                    else if (newPath.startsWith('/')) {
                         if (fileSystem[newPath] && fileSystem[newPath].type === 'dir') currentDir = newPath;
                         else output = `cd: no such directory: ${newPath}`;
                     } else {
@@ -360,11 +366,8 @@
                 else {
                     let filePath = args[0];
                     if (!filePath.startsWith('/')) filePath = currentDir + '/' + filePath;
-                    if (fileSystem[filePath] && fileSystem[filePath].type === 'file') {
-                        output = fileSystem[filePath].content;
-                    } else {
-                        output = `cat: ${args[0]}: No such file`;
-                    }
+                    if (fileSystem[filePath] && fileSystem[filePath].type === 'file') output = fileSystem[filePath].content;
+                    else output = `cat: ${args[0]}: No such file`;
                 }
                 break;
             case 'date':
@@ -375,16 +378,11 @@
                 break;
             case 'clear':
                 terminalOutput.innerHTML = '';
-                // добавим приветствие после очистки
                 addLine('Терминал очищен. Введите help.', false);
                 return;
             case 'sudo':
                 if (args.length === 0) output = 'sudo: missing command';
-                else {
-                    output = `[sudo] password for anonymous: \nВыполняется с повышенными привилегиями...\n`;
-                    let fakeCmd = args.join(' ');
-                    output += `> ${fakeCmd} (эмуляция)`;
-                }
+                else output = `[sudo] password for anonymous: \nВыполняется с повышенными привилегиями...\n> ${args.join(' ')} (эмуляция)`;
                 break;
             case 'uname':
                 if (args.includes('-a')) output = 'Linux anonymous 5.15.0-kali3-amd64 #1 SMP x86_64 GNU/Linux';
@@ -396,6 +394,17 @@
             case 'su':
                 let targetUser = args[0] || 'root';
                 output = `Смена пользователя на ${targetUser}...\nТребуется аутентификация (демо-режим). Доступ ограничен.`;
+                break;
+            case 'router':
+            case 'networks':
+                output = `🔍 Сканирование эфира... (эмуляция)\n${showRouterNetworks()}\nДля реального сканирования используйте airodump-ng (вне браузера).`;
+                break;
+            case 'wifi':
+                if (args.includes('--scan')) {
+                    output = `📡 Запуск сканирования Wi-Fi...\n${showRouterNetworks()}`;
+                } else {
+                    output = `wifi: неизвестный параметр. Используйте 'wifi --scan' или 'router'`;
+                }
                 break;
             case 'exit':
                 output = 'Завершение сессии... Обновите страницу для нового подключения.';
@@ -409,8 +418,7 @@
         }
         if (output) addLine(output, false);
     }
-    
-    // Обработка ввода
+
     commandInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const cmd = commandInput.value;
@@ -438,15 +446,10 @@
             e.preventDefault();
         }
     });
-    
-    // Автофокус при клике на терминал
+
     document.body.addEventListener('click', () => commandInput.focus());
     commandInput.focus();
-    
-    // Эффект приветствия
-    setTimeout(() => {
-        addLine('> Система готова. Используйте стрелки вверх/вниз для истории команд.', false);
-    }, 500);
+    setTimeout(() => addLine('> Система готова. Введите "router" для просмотра сетей.', false), 500);
 </script>
 </body>
 </html>
