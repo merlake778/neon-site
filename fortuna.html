@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Колесо фортуны | Чем заняться?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 30% 10%, #0a0f1a, #020408);
+            font-family: 'Segoe UI', 'Poppins', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 64px;
+            padding: 30px 20px;
+            border: 1px solid cyan;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2rem;
+            color: #0ff;
+            text-shadow: 0 0 8px cyan;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+        .wheel-wrapper {
+            position: relative;
+            margin: 20px auto;
+            width: min(75vw, 75vh, 400px);
+            height: min(75vw, 75vh, 400px);
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 50%;
+            box-shadow: 0 0 0 8px #111, 0 0 0 12px cyan, 0 10px 30px black;
+            transition: box-shadow 0.2s;
+        }
+        .pointer {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 50px solid gold;
+            filter: drop-shadow(0 4px 6px black);
+            z-index: 10;
+        }
+        .spin-btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 12px 32px;
+            margin: 30px 0 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255,75,43,0.6);
+            transition: 0.2s;
+            font-family: monospace;
+        }
+        .spin-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 25px #ff4b2b;
+        }
+        .result {
+            font-size: 1.7rem;
+            background: #000000aa;
+            padding: 15px;
+            border-radius: 60px;
+            backdrop-filter: blur(8px);
+            display: inline-block;
+            width: auto;
+            margin-top: 10px;
+            border: 1px solid cyan;
+            color: #fff;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: #8aff8a;
+            text-decoration: none;
+            border-bottom: 1px dashed;
+            font-size: 1rem;
+        }
+        @media (max-width: 550px) {
+            h1 { font-size: 1.5rem; }
+            .spin-btn { font-size: 1.3rem; padding: 10px 20px; }
+            .result { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎡 КОЛЕСО ФОРТУНЫ 🎡</h1>
+    <div class="wheel-wrapper">
+        <canvas id="wheelCanvas" width="600" height="600"></canvas>
+        <div class="pointer"></div>
+    </div>
+    <button class="spin-btn" id="spinBtn">КРУТИТЬ!</button>
+    <div id="result" class="result">👇 Нажми на колесо</div>
+    <a href="index.html" class="back-link">← Вернуться в меню</a>
+</div>
+
+<script>
+    (function() {
+        // ----- ВАРИАНТЫ (6 штук) -----
+        const SEGMENTS = [
+            "🚶‍♂️ Пойти походить",
+            "🎮 Поиграть в КС",
+            "📈 Заняться трейдингом",
+            "💻 Программирование",
+            "📚 Почитать книги",
+            "📄 Изучить документы по работе"
+        ];
+        const COLORS = [
+            "#ff4d4d", "#4caf50", "#ffa500", "#9c27b0", "#2196f3", "#ffeb3b"
+        ];
+        const SEG_COUNT = SEGMENTS.length;
+        const ANGLE_PER_SEG = (Math.PI * 2) / SEG_COUNT;
+
+        // Получаем canvas
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let currentRotation = 0;     // текущий угол поворота (радианы)
+        let spinning = false;
+        let animFrame = null;
+        let spinStartTime = 0;
+        let spinDuration = 2000;      // 2 секунды вращения
+        let spinStartRot = 0;
+        let spinTargetRot = 0;
+        let finalSegmentIndex = -1;
+
+        // Функция для отрисовки колеса с заданным углом поворота
+        function drawWheel(rotationRad) {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, width, height);
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = width * 0.45;
+            
+            for (let i = 0; i < SEG_COUNT; i++) {
+                const start = i * ANGLE_PER_SEG + rotationRad;
+                const end = (i + 1) * ANGLE_PER_SEG + rotationRad;
+                // Рисуем сектор
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, start, end);
+                ctx.closePath();
+                ctx.fillStyle = COLORS[i % COLORS.length];
+                ctx.fill();
+                ctx.strokeStyle = "#000";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // Сохраняем контекст для текста
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(start + ANGLE_PER_SEG / 2);
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                const textRadius = radius * 0.7;
+                ctx.font = `bold ${Math.max(12, Math.floor(radius * 0.08))}px "Segoe UI", "Poppins", monospace`;
+                ctx.fillStyle = "#fff";
+                ctx.shadowBlur = 0;
+                // небольшой обрез для читаемости
+                let text = SEGMENTS[i];
+                if (text.length > 18) text = text.slice(0, 15) + "..";
+                ctx.fillText(text, textRadius, 5);
+                ctx.restore();
+            }
+            // рисуем центральный круг
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.12, 0, Math.PI * 2);
+            ctx.fillStyle = "#111";
+            ctx.fill();
+            ctx.strokeStyle = "gold";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function resizeCanvas() {
+            const container = document.querySelector('.wheel-wrapper');
+            const size = container.clientWidth;
+            canvas.width = size;
+            canvas.height = size;
+            width = size;
+            height = size;
+            drawWheel(currentRotation);
+        }
+
+        // Определяем, какой сектор указывает на стрелку (верх, угол -90°)
+        // Стрелка зафиксирована вверху (угол -PI/2). Нужно найти сектор, который содержит этот угол с учётом поворота.
+        function getSegmentIndex(rotationRad) {
+            // Угол направления стрелки: -PI/2 (вверх)
+            const pointerAngle = -Math.PI / 2;
+            // Вычисляем угол в системе координат колеса: (pointerAngle - rotationRad) приводим к [0, 2PI)
+            let rawAngle = pointerAngle - rotationRad;
+            rawAngle = ((rawAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            const segIndex = Math.floor(rawAngle / ANGLE_PER_SEG);
+            return segIndex % SEG_COUNT;
+        }
+
+        // Анимация вращения с замедлением
+        function animateSpin(timestamp) {
+            if (!spinning) return;
+            const elapsed = timestamp - spinStartTime;
+            let t = Math.min(1, elapsed / spinDuration);
+            // easeOutCubic: замедление
+            const easeOut = 1 - Math.pow(1 - t, 3);
+            const currentRot = spinStartRot + (spinTargetRot - spinStartRot) * easeOut;
+            currentRotation = currentRot;
+            drawWheel(currentRotation);
+            if (t < 1) {
+                animFrame = requestAnimationFrame(animateSpin);
+            } else {
+                // Анимация завершена, фиксируем результат
+                spinning = false;
+                currentRotation = spinTargetRot;
+                drawWheel(currentRotation);
+                const finalIdx = getSegmentIndex(currentRotation);
+                finalSegmentIndex = finalIdx;
+                const resultText = SEGMENTS[finalIdx];
+                document.getElementById('result').innerHTML = `🎉 ВЫПАЛО: ${resultText} 🎉`;
+                // Небольшой звуковой эффект (опционально, без звука, просто визуал)
+                cancelAnimationFrame(animFrame);
+                animFrame = null;
+            }
+        }
+
+        function startSpin() {
+            if (spinning) return;
+            // Генерируем случайный поворот: минимум 5 полных оборотов + случайный доворот до сектора
+            const fullTurns = 5 * 2 * Math.PI;   // 5 полных кругов
+            const randomRad = Math.random() * 2 * Math.PI;
+            // Целевой угол = текущий угол + полные обороты + случайный угол
+            let targetRot = currentRotation + fullTurns + randomRad;
+            // Нормализуем targetRot (необязательно)
+            spinStartRot = currentRotation;
+            spinTargetRot = targetRot;
+            spinStartTime = performance.now();
+            spinning = true;
+            document.getElementById('result').innerHTML = "🌀 Крутим... 🌀";
+            animFrame = requestAnimationFrame(animateSpin);
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        });
+        
+        // Инициализация
+        resizeCanvas();
+        // Начальная установка рандомного угла, чтобы не всегда одинаково
+        currentRotation = Math.random() * 2 * Math.PI;
+        drawWheel(currentRotation);
+        
+        const spinBtn = document.getElementById('spinBtn');
+        spinBtn.addEventListener('click', () => {
+            startSpin();
+        });
+    })();
+</script>
+</body>
+</html>
