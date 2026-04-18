@@ -210,5 +210,40 @@
     </ul>
 </div>
 <div class="hint">⚡ клик — страница не найдена (404) ⚡</div>
+<div class="cursor" id="cursor"></div>
+
+<audio id="hoverSound">
+    <source src="https://www.soundjay.com/button/sounds/button-16.mp3">
+</audio>
+
+<script>
+// курсор
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+});
+
+// звук при наведении
+const sound = document.getElementById('hoverSound');
+document.querySelectorAll('.neon-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+        sound.currentTime = 0;
+        sound.play().catch(()=>{});
+    });
+});
+
+// искры при клике
+document.addEventListener('click', e => {
+    for (let i = 0; i < 6; i++) {
+        const s = document.createElement('div');
+        s.className = 'spark';
+        s.style.left = e.clientX + 'px';
+        s.style.top = e.clientY + 'px';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 500);
+    }
+});
+</script>
 </body>
 </html>
