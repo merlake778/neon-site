@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Монета & Блокчейн</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f1a 0%, #06090f 100%);
+            font-family: 'Segoe UI', 'Orbitron', monospace;
+            min-height: 100vh;
+            padding: 30px 20px;
+            color: #0f0;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            border: 1px solid #0f0;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+            padding: 30px 25px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.4rem;
+            letter-spacing: 3px;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            margin-bottom: 10px;
+        }
+
+        .sub {
+            text-align: center;
+            color: #6f6;
+            border-bottom: 1px dashed #0f0;
+            display: inline-block;
+            width: auto;
+            margin: 0 auto 30px;
+            padding-bottom: 8px;
+            font-family: monospace;
+        }
+
+        /* секции */
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 260px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 32px;
+            padding: 20px;
+            border: 1px solid #2a6e2a;
+            backdrop-filter: blur(4px);
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            border-left: 5px solid #0f0;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+
+        .balance {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: #0a0f0a;
+            display: inline-block;
+            padding: 8px 25px;
+            border-radius: 60px;
+            border: 1px solid #0f0;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+
+        button {
+            background: #1a3a1a;
+            border: none;
+            color: #0f0;
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #2a6e2a;
+            box-shadow: 0 0 8px #0f0;
+            transform: scale(1.02);
+        }
+
+        input, select {
+            background: #111;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 10px 15px;
+            border-radius: 40px;
+            font-size: 1rem;
+            margin: 5px;
+            width: calc(100% - 20px);
+        }
+
+        .tx-list {
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .tx-item {
+            background: #0e1a0e;
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 16px;
+            border-left: 3px solid #0f0;
+        }
+
+        .mine-progress {
+            background: #111;
+            border-radius: 30px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: #0f0;
+            text-decoration: none;
+            border-bottom: 1px dashed;
+        }
+
+        .error {
+            color: #f66;
+        }
+
+        hr {
+            border-color: #2a6e2a;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 760px) {
+            .balance { font-size: 1.5rem; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="appRoot"></div>
+
+<script>
+    // ========== НАСТРОЙКИ ==========
+    const PAGE_PASSWORD = "admin123";   // Пароль для входа (можно изменить)
+    const MINING_REWARD = 50;           // Награда за блок
+    const DIFFICULTY = 3;               // Сложность майнинга (кол-во ведущих нулей в хеше)
+    const STORAGE_KEY = "myBlockchainData";
+
+    // Глобальные переменные
+    let blockchain = [];
+    let pendingTransactions = [];
+    let userAddress = null;          // уникальный идентификатор кошелька (UUID)
+    let privateKey = null;           // для демонстрации - симуляция ключа
+    let currentBalance = 0;
+
+    // Функции шифрования (простая имитация AES)
+    async function encryptData(text, password) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+        );
+        const key = await crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: enc.encode("salt123"), iterations: 100000, hash: "SHA-256" },
+            keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt"]
+        );
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(text));
+        const combined = new Uint8Array(iv.length + encrypted.byteLength);
+        combined.set(iv);
+        combined.set(new Uint8Array(encrypted), iv.length);
+        return btoa(String.fromCharCode(...combined));
+    }
+
+    async function decryptData(encryptedBase64, password) {
+        const combined = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+        const iv = combined.slice(0, 12);
+        const data = combined.slice(12);
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+        );
+        const key = await crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: enc.encode("salt123"), iterations: 100000, hash: "SHA-256" },
+            keyMaterial, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
+        );
+        const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+        return new TextDecoder().decode(decrypted);
+    }
+
+    // Генерация кошелька
+    async function generateWallet() {
+        const id = crypto.randomUUID();
+        const priv = crypto.randomUUID();
+        userAddress = id;
+        privateKey = priv;
+        await saveWalletToLocalStorage();
+        return { address: userAddress, privateKey: privateKey };
+    }
+
+    async function saveWalletToLocalStorage() {
+        if (userAddress && privateKey) {
+            const encryptedPriv = await encryptData(privateKey, PAGE_PASSWORD);
+            const encryptedData = {
+                address: userAddress,
+                privateKeyEnc: encryptedPriv
+            };
+            localStorage.setItem('wallet_' + userAddress, JSON.stringify(encryptedData));
+        }
+    }
+
+    async function loadWalletFromStorage() {
+        const keys = Object.keys(localStorage);
+        for (let key of keys) {
+            if (key.startsWith('wallet_')) {
+                try {
+                    const raw = localStorage.getItem(key);
+                    const data = JSON.parse(raw);
+                    const decryptedPriv = await decryptData(data.privateKeyEnc, PAGE_PASSWORD);
+                    userAddress = data.address;
+                    privateKey = decryptedPriv;
+                    return true;
+                } catch(e) {}
+            }
+        }
+        return false;
+    }
+
+    // Блокчейн логика
+    function calculateHash(index, previousHash, timestamp, transactions, nonce) {
+        const data = index + previousHash + timestamp + JSON.stringify(transactions) + nonce;
+        return sha256(data);
+    }
+
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function mineBlock(block) {
+        let nonce = 0;
+        let hash;
+        while (true) {
+            hash = await calculateHash(block.index, block.previousHash, block.timestamp, block.transactions, nonce);
+            if (hash.startsWith('0'.repeat(DIFFICULTY))) {
+                block.hash = hash;
+                block.nonce = nonce;
+                break;
+            }
+            nonce++;
+            if (nonce % 1000 === 0) {
+                // обновляем прогресс через колбэк
+                if (window.updateMiningProgress) window.updateMiningProgress(nonce);
+                await new Promise(r => setTimeout(r, 0));
+            }
+        }
+        return block;
+    }
+
+    async function createGenesisBlock() {
+        const genesis = {
+            index: 0,
+            timestamp: Date.now(),
+            transactions: [],
+            previousHash: "0",
+            nonce: 0,
+            hash: ""
+        };
+        const mined = await mineBlock(genesis);
+        return mined;
+    }
+
+    async function addBlock(transactions, minerAddress) {
+        const previousBlock = blockchain[blockchain.length - 1];
+        const newBlock = {
+            index: blockchain.length,
+            timestamp: Date.now(),
+            transactions: transactions,
+            previousHash: previousBlock.hash,
+            nonce: 0,
+            hash: ""
+        };
+        const minedBlock = await mineBlock(newBlock);
+        blockchain.push(minedBlock);
+        // награда майнеру
+        const rewardTx = {
+            from: "SYSTEM",
+            to: minerAddress,
+            amount: MINING_REWARD,
+            timestamp: Date.now(),
+            isReward: true
+        };
+        pendingTransactions.push(rewardTx);
+        await processPendingTransactions();
+        await saveBlockchainToLocalStorage();
+        return minedBlock;
+    }
+
+    async function processPendingTransactions() {
+        // переносим все pending транзакции в блок
+        if (pendingTransactions.length === 0) return;
+        const previousBlock = blockchain[blockchain.length - 1];
+        const newBlock = {
+            index: blockchain.length,
+            timestamp: Date.now(),
+            transactions: [...pendingTransactions],
+            previousHash: previousBlock.hash,
+            nonce: 0,
+            hash: ""
+        };
+        const minedBlock = await mineBlock(newBlock);
+        blockchain.push(minedBlock);
+        pendingTransactions = []; // очищаем после включения в блок
+        await saveBlockchainToLocalStorage();
+    }
+
+    async function saveBlockchainToLocalStorage() {
+        const data = {
+            blockchain: blockchain,
+            pending: pendingTransactions,
+            userAddress: userAddress
+        };
+        const jsonStr = JSON.stringify(data);
+        const encrypted = await encryptData(jsonStr, PAGE_PASSWORD);
+        localStorage.setItem(STORAGE_KEY, encrypted);
+    }
+
+    async function loadBlockchainFromStorage() {
+        const encrypted = localStorage.getItem(STORAGE_KEY);
+        if (!encrypted) return false;
+        try {
+            const decrypted = await decryptData(encrypted, PAGE_PASSWORD);
+            const data = JSON.parse(decrypted);
+            blockchain = data.blockchain || [];
+            pendingTransactions = data.pending || [];
+            if (data.userAddress) userAddress = data.userAddress;
+            return true;
+        } catch(e) { return false; }
+    }
+
+    // вычисление баланса для адреса
+    function computeBalance(address) {
+        let balance = 0;
+        for (let block of blockchain) {
+            for (let tx of block.transactions) {
+                if (tx.to === address && tx.from !== "SYSTEM") balance += tx.amount;
+                if (tx.from === address && tx.from !== "SYSTEM") balance -= tx.amount;
+                if (tx.to === address && tx.from === "SYSTEM") balance += tx.amount; // награда
+            }
+        }
+        for (let tx of pendingTransactions) {
+            if (tx.to === address && tx.from !== "SYSTEM") balance += tx.amount;
+            if (tx.from === address && tx.from !== "SYSTEM") balance -= tx.amount;
+            if (tx.to === address && tx.from === "SYSTEM") balance += tx.amount;
+        }
+        return balance;
+    }
+
+    async function createTransaction(from, to, amount) {
+        if (from === "SYSTEM") return false;
+        const balance = computeBalance(from);
+        if (balance < amount) return false;
+        const tx = {
+            from: from,
+            to: to,
+            amount: amount,
+            timestamp: Date.now(),
+            isReward: false
+        };
+        pendingTransactions.push(tx);
+        await saveBlockchainToLocalStorage();
+        return true;
+    }
+
+    // Проверка пароля при загрузке
+    async function checkPassword() {
+        let pwd = prompt("Введите пароль для доступа к блокчейн-кошельку:");
+        if (pwd !== PAGE_PASSWORD) {
+            alert("Неверный пароль!");
+            return false;
+        }
+        return true;
+    }
+
+    // UI Отрисовка
+    async function renderUI() {
+        const app = document.getElementById('appRoot');
+        if (!userAddress) {
+            app.innerHTML = `
+                <div style="text-align:center;">
+                    <h1>🔐 Личная Монета</h1>
+                    <button id="createWalletBtn">✨ Создать новый кошелёк</button>
+                    <button id="importWalletBtn">📥 Восстановить кошелёк</button>
+                    <a href="index.html" class="back-link" style="display:block; margin-top:30px;">← На главную</a>
+                </div>
+            `;
+            document.getElementById('createWalletBtn')?.addEventListener('click', async () => {
+                await generateWallet();
+                await saveBlockchainToLocalStorage();
+                await renderUI();
+            });
+            document.getElementById('importWalletBtn')?.addEventListener('click', async () => {
+                const imported = prompt("Введите адрес кошелька (UUID)");
+                if (imported && imported.length > 10) {
+                    userAddress = imported;
+                    privateKey = "imported_" + Date.now();
+                    await saveWalletToLocalStorage();
+                    await renderUI();
+                } else alert("Некорректный адрес");
+            });
+            return;
+        }
+        currentBalance = computeBalance(userAddress);
+        const balanceHtml = `<div class="balance">💰 ${currentBalance} MON</div>`;
+        const pendingCount = pendingTransactions.length;
+        app.innerHTML = `
+            <h1>⛓️ Моя криптомонета</h1>
+            <div style="text-align:center"><span class="sub">● Децентрализованный узел ●</span></div>
+            <div class="grid">
+                <div class="card">
+                    <h2>👛 Кошелёк</h2>
+                    ${balanceHtml}
+                    <div style="font-size:0.8rem; word-break:break-all;">Адрес: ${userAddress}</div>
+                    <hr>
+                    <input type="text" id="toAddr" placeholder="Адрес получателя" style="width:100%">
+                    <input type="number" id="amountVal" placeholder="Сумма (MON)">
+                    <button id="sendTxBtn">📤 Отправить монеты</button>
+                    <div id="txStatus" style="font-size:0.8rem;"></div>
+                </div>
+                <div class="card">
+                    <h2>⛏️ Майнинг</h2>
+                    <div>Текущие необработанные транзакции: ${pendingCount}</div>
+                    <button id="mineBtn">Добыть блок (награда ${MINING_REWARD} MON)</button>
+                    <div id="miningProgress" class="mine-progress" style="display:none;">⛏️ Майнинг...</div>
+                </div>
+                <div class="card">
+                    <h2>📜 История транзакций</h2>
+                    <div id="txHistory" class="tx-list"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>🗃️ Блокчейн (${blockchain.length} блоков)</h2>
+                <div id="blocksList" class="tx-list" style="max-height:200px;"></div>
+            </div>
+            <a href="index.html" class="back-link">← На главную</a>
+        `;
+        // отрисовка транзакций
+        const txContainer = document.getElementById('txHistory');
+        const allTxs = [];
+        for (let block of blockchain) {
+            for (let tx of block.transactions) {
+                allTxs.push(tx);
+            }
+        }
+        allTxs.reverse();
+        txContainer.innerHTML = allTxs.length ? allTxs.map(tx => `
+            <div class="tx-item">
+                ${tx.from === "SYSTEM" ? "🎁 НАГРАДА" : "📤 Перевод"}<br>
+                ${tx.from !== "SYSTEM" ? `От: ${tx.from.substring(0, 12)}...<br>` : ''}
+                Кому: ${tx.to.substring(0, 12)}...<br>
+                Сумма: ${tx.amount} MON<br>
+                ${new Date(tx.timestamp).toLocaleString()}
+            </div>
+        `).join('') : '<div>Нет транзакций</div>';
+        // блоки
+        const blocksDiv = document.getElementById('blocksList');
+        blocksDiv.innerHTML = blockchain.map(b => `
+            <div class="tx-item">
+                Блок #${b.index} | Хеш: ${b.hash.substring(0, 20)}...<br>
+                Транзакций: ${b.transactions.length} | Nonce: ${b.nonce}
+            </div>
+        `).join('');
+        // кнопки
+        document.getElementById('sendTxBtn')?.addEventListener('click', async () => {
+            const to = document.getElementById('toAddr').value.trim();
+            const amount = parseFloat(document.getElementById('amountVal').value);
+            if (!to || isNaN(amount) || amount <= 0) {
+                document.getElementById('txStatus').innerText = "❌ Некорректные данные";
+                return;
+            }
+            const success = await createTransaction(userAddress, to, amount);
+            if (success) {
+                document.getElementById('txStatus').innerHTML = "✅ Транзакция добавлена в пул!";
+                await renderUI();
+            } else {
+                document.getElementById('txStatus').innerHTML = "❌ Недостаточно средств или ошибка";
+            }
+        });
+        let miningInProgress = false;
+        window.updateMiningProgress = (nonce) => {
+            const progressDiv = document.getElementById('miningProgress');
+            if (progressDiv && progressDiv.style.display !== 'none') {
+                progressDiv.innerHTML = `⛏️ Майнинг... итераций: ${nonce}`;
+            }
+        };
+        document.getElementById('mineBtn')?.addEventListener('click', async () => {
+            if (miningInProgress) return;
+            miningInProgress = true;
+            const progressDiv = document.getElementById('miningProgress');
+            if (progressDiv) progressDiv.style.display = 'block';
+            try {
+                await addBlock([...pendingTransactions], userAddress);
+                await renderUI();
+            } catch(e) { console.error(e); }
+            if (progressDiv) progressDiv.style.display = 'none';
+            miningInProgress = false;
+        });
+    }
+
+    // Инициализация
+    (async function init() {
+        const ok = await checkPassword();
+        if (!ok) return;
+        const loaded = await loadBlockchainFromStorage();
+        const hasWallet = await loadWalletFromStorage();
+        if (loaded && blockchain.length === 0) {
+            // генезис блок
+            const genesis = await createGenesisBlock();
+            blockchain = [genesis];
+            await saveBlockchainToLocalStorage();
+        } else if (!loaded) {
+            const genesis = await createGenesisBlock();
+            blockchain = [genesis];
+            pendingTransactions = [];
+            await saveBlockchainToLocalStorage();
+        }
+        if (!hasWallet) {
+            // предложим создать
+        } else {
+            await renderUI();
+        }
+        if (!hasWallet) {
+            await renderUI(); // покажет кнопку создания
+        } else {
+            await renderUI();
+        }
+    })();
+</script>
+</body>
+</html>
