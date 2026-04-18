@@ -146,6 +146,50 @@
             backdrop-filter: blur(4px);
             pointer-events: none;
         }
+        /* glitch эффект заголовка */
+.menu-title {
+    position: relative;
+    animation: glitch 2s infinite;
+}
+
+@keyframes glitch {
+    0% { text-shadow: 0 0 5px cyan; }
+    20% { text-shadow: 2px 0 red, -2px 0 blue; }
+    40% { text-shadow: -2px 0 red, 2px 0 blue; }
+    60% { text-shadow: 0 0 10px cyan; }
+    100% { text-shadow: 0 0 5px cyan; }
+}
+
+/* неоновый курсор */
+.cursor {
+    width: 12px;
+    height: 12px;
+    border: 2px solid cyan;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px cyan;
+    z-index: 999;
+}
+
+/* искры */
+.spark {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: cyan;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkAnim 0.5s linear forwards;
+}
+
+@keyframes sparkAnim {
+    to {
+        transform: translateY(20px) scale(0);
+        opacity: 0;
+    }
+}
     </style>
 </head>
 <body>
